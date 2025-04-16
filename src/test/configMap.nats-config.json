@@ -1,0 +1,24 @@
+{
+  "apiVersion": "v1",
+  "data": {
+    "nats.conf": "{\n  \"http_port\": 8222,\n  \"lame_duck_duration\": \"30s\",\n  \"lame_duck_grace_period\": \"10s\",\n  \"pid_file\": \"/var/run/nats/nats.pid\",\n  \"port\": 4222,\n  \"server_name\": $SERVER_NAME\n}\n"
+  },
+  "kind": "ConfigMap",
+  "metadata": {
+    "annotations": {
+    },
+    "creationTimestamp": "2024-02-07T19:45:42Z",
+    "labels": {
+      "app.kubernetes.io/component": "nats",
+      "app.kubernetes.io/instance": "nats",
+      "app.kubernetes.io/managed-by": "Helm",
+      "app.kubernetes.io/name": "nats",
+      "app.kubernetes.io/version": "2.10.10",
+      "helm.sh/chart": "nats-1.1.8"
+    },
+    "name": "nats-config",
+    "namespace": "nats",
+    "resourceVersion": "108492685",
+    "uid": "dce5ed73-efe1-4e29-8465-c9613ac17530"
+  }
+}

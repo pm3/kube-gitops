@@ -1,0 +1,19 @@
+<html>
+<body>
+<textarea id="data" cols="120" rows="10"></textarea>
+<br>
+<div id="resp">--</div>
+<br>
+<button onclick="crypt()">crypt</button>
+<script>
+    function crypt(){
+      var data = document.getElementById('data').value;
+      fetch(window.location.pathname, {method: 'POST', body: data, headers: {'Content-Type':'text/plain'}})
+      .then(response => response.text())
+      .then(text => document.getElementById('resp').textContent = "enc("+text+")");
+    }
+
+
+</script>
+</body>
+</html>
