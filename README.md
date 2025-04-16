@@ -28,7 +28,6 @@ The `flux.yaml` file defines a complete GitOps deployment for Kubernetes using t
   - Always pull policy
 - Ingress configuration with:
   - Host: ww.example.com
-  - TLS enabled with secret `https-example-com`
   - Paths for Git operations and container registry access
 
 ### Deployment
