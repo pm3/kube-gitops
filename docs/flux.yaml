@@ -101,10 +101,6 @@ metadata:
   name: flux-public-host
   namespace: flux
 spec:
-  tls:
-    - hosts:
-        - ww.example.com
-      secretName: https-example-com
   rules:
     - host: ww.example.com
       http:
