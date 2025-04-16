@@ -1,0 +1,127 @@
+#example deployment gitops
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flux
+  namespace: flux
+imagePullSecrets:
+  - name: astonvse
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: flux
+  labels:
+    name: flux
+rules:
+  - apiGroups: ['*']
+    resources: ['*']
+    verbs: ['*']
+  - nonResourceURLs: ['*']
+    verbs: ['*']
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: flux
+  labels:
+    name: flux
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: flux
+subjects:
+  - kind: ServiceAccount
+    name: flux
+    namespace: flux
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-infra
+  namespace: flux
+  labels:
+    git-ops: watch
+type: Opaque
+data:
+  git-auth: XXXX
+  encrypt-key: XXXX
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-infra
+  namespace: flux
+  labels:
+    git-ops: watch
+data:
+  git-ops.yaml: |
+    git:
+      url: https://github.com/pm3/kube-gitops-infra.git
+      branch: master
+      user: molnar33
+      password: ${flux/my-infra/git-auth}
+    encryptKey: ${flux/my-infra/encrypt-key}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flux
+  namespace: flux
+spec:
+  selector:
+    app: flux
+  ports:
+    - protocol: TCP
+      port: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flux
+  namespace: flux
+spec:
+  selector:
+    matchLabels:
+      app: flux
+  template:
+    metadata:
+      labels:
+        app: flux
+    spec:
+      serviceAccountName: flux
+      containers:
+        - name: flux
+          image: molnar33/kube-gitops
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: flux-public-host
+  namespace: flux
+spec:
+  tls:
+    - hosts:
+        - ww.example.com
+      secretName: https-example-com
+  rules:
+    - host: ww.example.com
+      http:
+        paths:
+          - path: /git-ops/git/my-infra
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: flux-aid-aks
+                port:
+                  number: 8080
+          - path: /git-ops/repo/example.azurecr.io
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: flux-aid-aks
+                port:
+                  number: 8080
