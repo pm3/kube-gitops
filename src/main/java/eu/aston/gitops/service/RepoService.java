@@ -105,11 +105,18 @@ public class RepoService {
         String auth = cacheAuthorize.get(remote);
         HttpRequest.Builder b = HttpRequest.newBuilder().GET().uri(new URI(uri));
         b.header("Accept", "application/vnd.docker.distribution.manifest.v2+json");
+        b.header("Accept", "application/vnd.oci.image.index.v1+json");
         b.timeout(Duration.ofSeconds(10));
         if (auth != null){
             b.header("Authorization", "Basic "+auth);
         }
         HttpResponse<String> resp = httpClient.send(b.build(), HttpResponse.BodyHandlers.ofString());
+        if(LOGGER.isDebugEnabled()){
+            LOGGER.debug("containerDigest {} {} {} - response code {}", remote, name, version, resp.statusCode());
+            if(resp.statusCode()!=200){
+                LOGGER.debug("response: {}", resp.body());
+            }
+        }
         return resp.headers().firstValue("Docker-Content-Digest").orElse(null);
     }
 }
