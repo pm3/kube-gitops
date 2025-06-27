@@ -113,4 +113,8 @@ public class GitService {
         checkSumCache.put(key, aktCheckSum);
         return true;
     }
+
+    public void clearCheckSumCache(){
+        checkSumCache.clear();
+    }
 }

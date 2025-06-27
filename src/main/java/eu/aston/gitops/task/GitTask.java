@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -23,7 +24,7 @@ import eu.aston.gitops.utils.GsonPath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class GitTask implements Runnable {
+public class GitTask implements Consumer<Map<String, Object>> {
     private final static Logger LOGGER = LoggerFactory.getLogger(GitTask.class);
 
     private final KubeService kubeService;
@@ -47,8 +48,11 @@ public class GitTask implements Runnable {
     }
 
     @Override
-    public void run() {
+    public void accept(Map<String, Object> data) {
         try{
+            if(data!=null && "1".equals(data.get("params.force"))){
+                gitService.clearCheckSumCache();
+            }
             GitOpsData gitOpsData = createGitOpsData();
             run(gitOpsData);
             this.lastConfigHash = ChecksumDir.checksumString(gitOpsData.toString());

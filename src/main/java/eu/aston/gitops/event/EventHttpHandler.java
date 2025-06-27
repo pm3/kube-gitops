@@ -2,6 +2,7 @@ package eu.aston.gitops.event;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,6 +37,7 @@ public class EventHttpHandler implements HttpHandler {
                 evenData.put("uri", exchange.getRequestURI());
                 evenData.put("body", exchange.getRequestBody().readAllBytes());
                 evenData.put("headers", exchange.getRequestHeaders());
+                parseQueryParams(evenData, exchange.getRequestURI().getQuery());
                 boolean ok = eventCtx.exec(eventName, evenData);
                 if(!ok && eventName.lastIndexOf('/')>1){
                     eventName = eventName.substring(0, eventName.lastIndexOf('/')+1);
@@ -67,5 +69,17 @@ public class EventHttpHandler implements HttpHandler {
         OutputStream os = exchange.getResponseBody();
         os.write(body);
         os.close();
+    }
+
+    private void parseQueryParams(Map<String, Object> evenData, String query) {
+        if(query!=null) {
+            String[] params = query.split("&");
+            for (String param : params) {
+                String[] keyValue = param.split("=", 2);
+                if (keyValue.length == 2) {
+                    evenData.put("params." + keyValue[0], URLDecoder.decode(keyValue[1], StandardCharsets.UTF_8));
+                }
+            }
+        }
     }
 }
