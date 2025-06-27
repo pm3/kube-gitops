@@ -50,11 +50,12 @@ public class GitTask implements Consumer<Map<String, Object>> {
     @Override
     public void accept(Map<String, Object> data) {
         try{
-            if(data!=null && "1".equals(data.get("params.force"))){
+            boolean force = data!=null && "1".equals(data.get("params.force"));
+            if(force){
                 gitService.clearCheckSumCache();
             }
             GitOpsData gitOpsData = createGitOpsData();
-            run(gitOpsData);
+            run(gitOpsData, force);
             this.lastConfigHash = ChecksumDir.checksumString(gitOpsData.toString());
         }catch (Exception e){
             LOGGER.warn("error git task {}", name, e);
@@ -65,7 +66,7 @@ public class GitTask implements Consumer<Map<String, Object>> {
         GitOpsData gitOpsData = createGitOpsData();
         long hash = ChecksumDir.checksumString(gitOpsData.toString());
         if(hash!=lastConfigHash){
-            run(gitOpsData);
+            run(gitOpsData, false);
             this.lastConfigHash = hash;
         }
         return gitOpsData;
@@ -78,11 +79,11 @@ public class GitTask implements Consumer<Map<String, Object>> {
         return yamlGsonParser.parseYaml(new StringReader(yaml), GitOpsData.class, namespace);
     }
 
-    private void run(GitOpsData gitOpsData) throws Exception {
+    private void run(GitOpsData gitOpsData, boolean force) throws Exception {
         File gitDir = new File("/app/data/", name);
         LOGGER.debug("clone or pull {}", gitOpsData.git().url());
         boolean changed = gitService.pullOrClone(gitDir, gitOpsData.git());
-        if(!changed){
+        if(!changed && !force){
             LOGGER.info("not changed {}", name);
             return;
         }
