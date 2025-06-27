@@ -51,11 +51,13 @@ public class Main {
 
             Main main = new Main();
 
-            WatchFacade watchFacade = new WatchFacade();
-            watchFacade.watch("/api/v1/configmaps?labelSelector=git-ops%3Dwatch&watch=true=", ()-> main.eventCtx.exec(
-                    RELOAD_PATH));
-            watchFacade.watch("/api/v1/secrets?labelSelector=git-ops%3Dwatch&watch=true", ()-> main.eventCtx.exec(
-                    RELOAD_PATH));
+            if("1".equals(System.getenv("WATCH"))) {
+                WatchFacade watchFacade = new WatchFacade();
+                String configMapPath = "/api/v1/configmaps?labelSelector=git-ops%3Dwatch&watch=true=";
+                watchFacade.watch(configMapPath, ()-> main.eventCtx.exec(RELOAD_PATH));
+                String secretPath = "/api/v1/secrets?labelSelector=git-ops%3Dwatch&watch=true";
+                watchFacade.watch(secretPath, ()-> main.eventCtx.exec(RELOAD_PATH));
+            }
 
             long period = Duration.ofMinutes(15).toMillis();
             Timer timer = new Timer(true);
