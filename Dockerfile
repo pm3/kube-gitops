@@ -1,10 +1,10 @@
-FROM openjdk:21-jdk-slim as build
+FROM eclipse-temurin:25-jdk AS build
 
 WORKDIR /app
 
 RUN jlink --add-modules java.base,java.xml,java.desktop,java.security.jgss,jdk.crypto.ec,jdk.localedata,java.net.http,jdk.httpserver --include-locales en --output jre
 
-FROM debian:buster-slim
+FROM debian:bookworm-slim
 
 COPY --from=build /app/jre /usr/jre/
 
