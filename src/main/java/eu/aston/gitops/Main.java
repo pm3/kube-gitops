@@ -17,6 +17,7 @@ import eu.aston.gitops.utils.YamlGsonParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InputStream;
 import java.io.StringReader;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -39,6 +40,8 @@ public class Main {
             if ("debug".equalsIgnoreCase(System.getenv("LOG_LEVEL"))) {
                 System.setProperty(org.slf4j.simple.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "DEBUG");
             }
+
+            logBuildInfo();
 
             Main main = new Main();
 
@@ -170,6 +173,26 @@ public class Main {
                 eventCtx.addAsync(path, repoTask);
                 eventCtx.exec(path);
             }
+        }
+    }
+
+    private static void logBuildInfo() {
+        Logger log = LoggerFactory.getLogger(Main.class);
+        try (InputStream in = Main.class.getResourceAsStream("/META-INF/build-info.properties")) {
+            if (in == null) {
+                log.info("build info: (not available)");
+                return;
+            }
+            Properties p = new Properties();
+            p.load(in);
+            String version = p.getProperty("version", "?");
+            String commit = p.getProperty("commit", "?");
+            String buildTime = p.getProperty("buildTime", "?");
+            if (commit != null && commit.startsWith("${")) commit = "n/a";
+            if (buildTime != null && buildTime.startsWith("${")) buildTime = "n/a";
+            log.info("build info: version={}, commit={}, buildTime={}", version, commit, buildTime);
+        } catch (Exception e) {
+            log.warn("could not load build info: {}", e.getMessage());
         }
     }
 
