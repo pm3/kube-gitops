@@ -41,7 +41,7 @@ public abstract class BaseKustomizeTask implements Consumer<Map<String, Object>>
         try {
             boolean force = data != null && "1".equals(data.get("params.force"));
             if (force) {
-                lastCheckSum = null;
+                lastCheckSumMap.clear();
             }
             run(force);
             this.lastConfigHash = ChecksumDir.checksumString(gitOpsData.toString());
@@ -92,10 +92,10 @@ public abstract class BaseKustomizeTask implements Consumer<Map<String, Object>>
             return;
         }
         if (!opsNamespaces.contains(namespace)) {
-            LOGGER.debug("add namespace {}", namespace);
+            LOGGER.info("add namespace {}", namespace);
             opsNamespaces.add(namespace);
         }
-        if (checkDirChanged(nsDir)) {
+        if (!checkDirChanged(nsDir)) {
             LOGGER.info("namespace not modified {}", namespace);
             return;
         }
@@ -170,15 +170,15 @@ public abstract class BaseKustomizeTask implements Consumer<Map<String, Object>>
         return GsonPath.asLong(GsonPath.el(root, "metadata", "resourceVersion"));
     }
 
-    protected Long lastCheckSum = null;
+    private final Map<File, Long> lastCheckSumMap = new HashMap<>();
 
-    public boolean checkDirChanged(File dir) throws IOException {
-        String key = dir.getCanonicalPath();
+    protected boolean checkDirChanged(File dir) throws IOException {
+        Long lastCheckSum = lastCheckSumMap.get(dir);
         long aktCheckSum = ChecksumDir.checksumDir(dir);
         if (lastCheckSum != null && lastCheckSum == aktCheckSum) {
             return false;
         }
-        lastCheckSum = aktCheckSum;
+        lastCheckSumMap.put(dir, aktCheckSum);
         return true;
     }
 }
