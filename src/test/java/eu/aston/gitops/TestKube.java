@@ -1,15 +1,6 @@
 package eu.aston.gitops;
 
 
-import java.io.File;
-import java.lang.reflect.Method;
-import java.net.http.HttpClient;
-import java.nio.file.Files;
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -24,9 +15,18 @@ import eu.aston.gitops.utils.GsonPath;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
+import java.lang.reflect.Method;
+import java.net.http.HttpClient;
+import java.nio.file.Files;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+
 public class TestKube {
 
-    public void tesAllGet(){
+    public void tesAllGet() {
 
         KubeService kubeService = new KubeService();
         List<String> l1 = kubeService.listNamespaces();
@@ -48,14 +48,14 @@ public class TestKube {
     @Test
     public void testGitTaskKube() throws Exception {
         KubeService kubeService = new KubeService();
-        GitTask gitTask = new GitTask(kubeService, null, null, null, "default", "aaa", new HashSet<>());
+        GitTask gitTask = new GitTask(kubeService, null, null, "aaa", new HashSet<>());
         Pod pod = loadPod("pod.nats.json");
 
         String names = GsonPath.str(pod.raw(), "metadata", "annotations", "configmap.aston.sk/reload");
         System.out.println(names);
         Assertions.assertEquals(names, "nats-config");
         List<String> fullNames = GsonPath.arrayMap(pod.raw(), GsonPath::asString, "spec", "volumes", "*", "configMap",
-                                                   "name");
+                "name");
         System.out.println(fullNames);
         Assertions.assertEquals(1, fullNames.size(), "fullNames.size");
 
@@ -69,7 +69,7 @@ public class TestKube {
         HttpClient httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(5))
                 .version(HttpClient.Version.HTTP_1_1)
-                                          .build();
+                .build();
         KubeService kubeService = new KubeService();
         RepoService repoService = new RepoService(kubeService, httpClient);
         RepoTask repoTask = new RepoTask(kubeService, repoService, "aaa", new HashSet<>());
@@ -91,20 +91,20 @@ public class TestKube {
     @SuppressWarnings("unchecked")
     public <T> T callPrivate(Object instance, String name, Object... args) throws Exception {
         Method m0 = null;
-        for(Method m : instance.getClass().getDeclaredMethods()){
-            if(m.getName().equals(name) && m.getParameterCount()==args.length){
+        for (Method m : instance.getClass().getDeclaredMethods()) {
+            if (m.getName().equals(name) && m.getParameterCount() == args.length) {
                 m0 = m;
                 break;
             }
         }
-        if(m0==null){
+        if (m0 == null) {
             throw new NoSuchMethodException(name);
         }
         m0.setAccessible(true);
-        return (T)m0.invoke(instance, args);
+        return (T) m0.invoke(instance, args);
     }
 
-    public static Pod loadPod(String path) throws Exception{
+    public static Pod loadPod(String path) throws Exception {
         JsonObject el = loadJson(path).getAsJsonObject();
         String name = GsonPath.str(el, "metadata", "name");
         String namespace = GsonPath.str(el, "metadata", "namespace");
@@ -112,7 +112,7 @@ public class TestKube {
         return new Pod(name, namespace, el);
     }
 
-    public static ConfigMap loadConfigMap(String path) throws Exception{
+    public static ConfigMap loadConfigMap(String path) throws Exception {
         JsonObject el = loadJson(path).getAsJsonObject();
         String name = GsonPath.str(el, "metadata", "name");
         String namespace = GsonPath.str(el, "metadata", "namespace");

@@ -1,29 +1,31 @@
 package eu.aston.gitops;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import eu.aston.gitops.event.EventCtx;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class TestEvent {
 
     @Test
-    public void testSingleAsync(){
+    public void testSingleAsync() {
         AtomicInteger counter = new AtomicInteger();
         EventCtx eventCtx = new EventCtx();
-        eventCtx.addAsync("/n1", (d)->{
+        eventCtx.addAsync("/n1", (d) -> {
             counter.incrementAndGet();
-            try{
+            try {
                 Thread.sleep(10);
-            }catch (Exception ignore){}
+            } catch (Exception ignore) {
+            }
         });
-        for(int i=0; i<20; i++){
+        for (int i = 0; i < 20; i++) {
             eventCtx.exec("/n1");
         }
-        try{
+        try {
             Thread.sleep(500);
-        }catch (Exception ignore){}
+        } catch (Exception ignore) {
+        }
         Assertions.assertEquals(counter.get(), 2, "counter");
     }
 }

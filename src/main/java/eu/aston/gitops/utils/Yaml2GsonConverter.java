@@ -4,12 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import org.yaml.snakeyaml.nodes.AnchorNode;
-import org.yaml.snakeyaml.nodes.MappingNode;
-import org.yaml.snakeyaml.nodes.Node;
-import org.yaml.snakeyaml.nodes.NodeTuple;
-import org.yaml.snakeyaml.nodes.ScalarNode;
-import org.yaml.snakeyaml.nodes.SequenceNode;
+import org.yaml.snakeyaml.nodes.*;
 
 public class Yaml2GsonConverter {
 
@@ -37,10 +32,10 @@ public class Yaml2GsonConverter {
     }
 
     public JsonElement convertAny(Node node) {
-        if(node instanceof ScalarNode scalarNode) return convertScalar(scalarNode);
-        if(node instanceof MappingNode mappingNode) return convertMapping(mappingNode);
-        if(node instanceof SequenceNode sequenceNode) return convertSequence(sequenceNode);
-        if(node instanceof AnchorNode) throw new IllegalStateException("Anchor node type " + node);
+        if (node instanceof ScalarNode scalarNode) return convertScalar(scalarNode);
+        if (node instanceof MappingNode mappingNode) return convertMapping(mappingNode);
+        if (node instanceof SequenceNode sequenceNode) return convertSequence(sequenceNode);
+        if (node instanceof AnchorNode) throw new IllegalStateException("Anchor node type " + node);
         throw new IllegalStateException("Unknown node type " + node.getClass().getSimpleName());
     }
 }

@@ -10,7 +10,7 @@ import java.util.zip.CRC32;
 
 public class ChecksumDir {
 
-    static public long checksumString(String s){
+    static public long checksumString(String s) {
         CRC32 crc32 = new CRC32();
         crc32.update(s.getBytes(StandardCharsets.UTF_8));
         return crc32.getValue();
@@ -27,7 +27,7 @@ public class ChecksumDir {
             byte[] nBytes = f.getName().getBytes(StandardCharsets.UTF_8);
             crc32.update(nBytes);
             String[] files = f.list();
-            if(files!=null) {
+            if (files != null) {
                 Arrays.sort(files);
                 for (String fName : files) {
                     if (fName.startsWith("."))

@@ -1,12 +1,5 @@
 package eu.aston.gitops.task;
 
-import java.net.http.HttpClient;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-
 import com.google.gson.JsonElement;
 import eu.aston.gitops.kube.Pod;
 import eu.aston.gitops.service.KubeService;
@@ -15,8 +8,10 @@ import eu.aston.gitops.utils.GsonPath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.*;
+
 public class RepoTask implements Runnable {
-    private final  Logger LOGGER = LoggerFactory.getLogger(RepoTask.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(RepoTask.class);
 
     private final KubeService kubeService;
     private final RepoService repoService;
@@ -37,11 +32,11 @@ public class RepoTask implements Runnable {
     @Override
     public void run() {
         Map<String, String> imageHashCache = new HashMap<>();
-        for(String namespace : opsNamespaces){
+        for (String namespace : opsNamespaces) {
             LOGGER.info("scan namespace {}", namespace);
             List<Pod> pods = kubeService.listPods(namespace);
-            for(Pod pod : pods) {
-                if(checkPodImages(pod, imageHashCache)){
+            for (Pod pod : pods) {
+                if (checkPodImages(pod, imageHashCache)) {
                     LOGGER.info("reload pod {}/{}", pod.namespace(), pod.name());
                     kubeService.deletePod(pod.namespace(), pod.name());
                 }
@@ -52,12 +47,12 @@ public class RepoTask implements Runnable {
     private boolean checkPodImages(Pod pod, Map<String, String> imageHashCache) {
         repoService.addStorageSecrets(pod.namespace(), podImagePullSecret(pod));
         List<ImageData> arr = getImageData(pod);
-        for(ImageData image : arr){
-            if(image.image()!=null && image.imageID()!=null && image.image().startsWith(host)){
+        for (ImageData image : arr) {
+            if (image.image() != null && image.imageID() != null && image.image().startsWith(host)) {
                 String aktHash = image.hash();
-                if(aktHash!=null){
+                if (aktHash != null) {
                     String repoHash = imageHashCache.computeIfAbsent(image.image(), repoService::imageHash);
-                    if(repoHash!=null && !Objects.equals(aktHash, repoHash)){
+                    if (repoHash != null && !Objects.equals(aktHash, repoHash)) {
                         LOGGER.debug("pod {}/{} hash {} != {}", pod.namespace(), pod.name(), aktHash, repoHash);
                         return true;
                     }
@@ -77,19 +72,20 @@ public class RepoTask implements Runnable {
         return GsonPath.arrayMap(pod.raw(), GsonPath::asString, "spec", "imagePullSecrets", "*", "name");
     }
 
-    private ImageData podImage(JsonElement e){
+    private ImageData podImage(JsonElement e) {
         String image = GsonPath.str(e, "image");
         String imageID = GsonPath.str(e, "imageID");
-        if(image!=null && imageID!=null){
+        if (image != null && imageID != null) {
             String[] items = imageID.split("@");
-            if(items.length>1){
-                return new ImageData(image, imageID, items[items.length-1]);
+            if (items.length > 1) {
+                return new ImageData(image, imageID, items[items.length - 1]);
             }
         }
         return null;
     }
 
     public record ImageData(String image,
-                     String imageID,
-                     String hash){}
+                            String imageID,
+                            String hash) {
+    }
 }

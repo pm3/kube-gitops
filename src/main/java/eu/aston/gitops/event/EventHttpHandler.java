@@ -1,16 +1,16 @@
 package eu.aston.gitops.event;
 
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class EventHttpHandler implements HttpHandler {
 
@@ -29,9 +29,9 @@ public class EventHttpHandler implements HttpHandler {
         String uri = exchange.getRequestURI().getPath();
         int status = 404;
         byte[] body = new byte[0];
-        try{
-            if(uri.startsWith(contextPath)){
-                String eventName = uri.substring(contextPath.length()-1);
+        try {
+            if (uri.startsWith(contextPath)) {
+                String eventName = uri.substring(contextPath.length() - 1);
                 Map<String, Object> evenData = new HashMap<>();
                 evenData.put("method", exchange.getRequestMethod());
                 evenData.put("uri", exchange.getRequestURI());
@@ -39,25 +39,25 @@ public class EventHttpHandler implements HttpHandler {
                 evenData.put("headers", exchange.getRequestHeaders());
                 parseQueryParams(evenData, exchange.getRequestURI().getQuery());
                 boolean ok = eventCtx.exec(eventName, evenData);
-                if(!ok && eventName.lastIndexOf('/')>1){
-                    eventName = eventName.substring(0, eventName.lastIndexOf('/')+1);
+                if (!ok && eventName.lastIndexOf('/') > 1) {
+                    eventName = eventName.substring(0, eventName.lastIndexOf('/') + 1);
                     ok = eventCtx.exec(eventName, evenData);
                 }
-                if(ok) {
+                if (ok) {
                     status = 200;
-                    if(evenData.get("response.body") instanceof byte[] bresp) {
+                    if (evenData.get("response.body") instanceof byte[] bresp) {
                         body = bresp;
-                    } else if(evenData.get("response.body") instanceof String sreps){
+                    } else if (evenData.get("response.body") instanceof String sreps) {
                         body = sreps.getBytes(StandardCharsets.UTF_8);
                     }
-                    for(var e : evenData.entrySet()){
-                        if(e.getKey().startsWith("response.header.")){
+                    for (var e : evenData.entrySet()) {
+                        if (e.getKey().startsWith("response.header.")) {
                             exchange.getResponseHeaders().add(e.getKey().substring("response.header.".length()), e.getValue().toString());
                         }
                     }
                 }
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             status = 500;
             body = e.getMessage().getBytes(StandardCharsets.UTF_8);
             LOGGER.warn("call error {} - {}", uri, e.getMessage());
@@ -72,7 +72,7 @@ public class EventHttpHandler implements HttpHandler {
     }
 
     private void parseQueryParams(Map<String, Object> evenData, String query) {
-        if(query!=null) {
+        if (query != null) {
             String[] params = query.split("&");
             for (String param : params) {
                 String[] keyValue = param.split("=", 2);

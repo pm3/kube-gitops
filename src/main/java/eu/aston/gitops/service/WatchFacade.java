@@ -1,5 +1,8 @@
 package eu.aston.gitops.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
@@ -15,9 +18,6 @@ import java.nio.file.Files;
 import java.time.Duration;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class WatchFacade {
 
@@ -36,12 +36,12 @@ public class WatchFacade {
     @SuppressWarnings("BusyWait")
     public void watch(String path, Runnable run) throws Exception {
         String kubePort = System.getenv("KUBERNETES_PORT");
-        if(kubePort==null) throw new Exception("env:KUBERNETES_PORT is empty");
+        if (kubePort == null) throw new Exception("env:KUBERNETES_PORT is empty");
         URI kube = new URI(kubePort);
-        URI watcher = new URI("https://"+kube.getHost()+":"+kube.getPort()+path);
+        URI watcher = new URI("https://" + kube.getHost() + ":" + kube.getPort() + path);
 
         File tokenFile = new File("/var/run/secrets/kubernetes.io/serviceaccount/token");
-        if(!tokenFile.exists()) throw new Exception("token file not found");
+        if (!tokenFile.exists()) throw new Exception("token file not found");
         String token = Files.readString(tokenFile.toPath());
 
         executor.execute(() -> {
@@ -49,14 +49,14 @@ public class WatchFacade {
                 try {
 
                     HttpRequest r = HttpRequest.newBuilder().GET().uri(watcher)
-                                               .header("Accept", "application/json")
-                                               .header("Authorization", "Bearer "+token)
-                                                .timeout(Duration.ofMinutes(5))
-                                               .build();
+                            .header("Accept", "application/json")
+                            .header("Authorization", "Bearer " + token)
+                            .timeout(Duration.ofMinutes(5))
+                            .build();
 
                     HttpResponse<InputStream> resp = httpClient.send(r, HttpResponse.BodyHandlers.ofInputStream());
-                    if(resp.statusCode()!=200) {
-                        throw new Exception("response code "+resp.statusCode());
+                    if (resp.statusCode() != 200) {
+                        throw new Exception("response code " + resp.statusCode());
                     }
                     BufferedReader br = new BufferedReader(new InputStreamReader(resp.body()));
                     while (true) {
@@ -67,12 +67,13 @@ public class WatchFacade {
                     }
                     run.run();
                 } catch (Exception e) {
-                    if(!e.getMessage().equals("closed")){
+                    if (!e.getMessage().equals("closed")) {
                         LOGGER.warn("watch error {} - {} {}", path, e.getMessage(), e.getClass());
                     }
                     try {
                         Thread.sleep(1000);
-                    }catch (Exception ignore){}
+                    } catch (Exception ignore) {
+                    }
                 }
             }
         });

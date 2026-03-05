@@ -1,5 +1,9 @@
 package eu.aston.gitops.service;
 
+import eu.aston.gitops.utils.ExecProcess;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
@@ -14,15 +18,10 @@ import java.nio.file.Files;
 import java.security.spec.KeySpec;
 import java.util.Base64;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import eu.aston.gitops.utils.ExecProcess;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class EncryptService {
 
@@ -42,13 +41,13 @@ public class EncryptService {
     }
 
     private SecretKeySpec createSecretKey(String key) {
-        try{
+        try {
             String rawKey = new String(Base64.getDecoder().decode(key), StandardCharsets.UTF_8);
             SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
             KeySpec spec = new PBEKeySpec(rawKey.toCharArray(), "{+fX}WpwFrbL63a6".getBytes(), 256, 256);
             SecretKey tmp = factory.generateSecret(spec);
             return new SecretKeySpec(tmp.getEncoded(), "AES");
-        }catch (Exception e){
+        } catch (Exception e) {
             LOGGER.warn("parse secret key error {} - {}", key, e.getMessage());
             LOGGER.debug("parse secret key stack ", e);
         }
@@ -69,11 +68,11 @@ public class EncryptService {
     }
 
     public String decrypt(String strToDecrypt, SecretKeySpec secretKey) {
-        try{
+        try {
             byte[] raw = decryptRaw(strToDecrypt, secretKey);
             return new String(raw, StandardCharsets.UTF_8);
-        }catch (Exception e){
-            throw new RuntimeException("invalid encription data "+strToDecrypt, e);
+        } catch (Exception e) {
+            throw new RuntimeException("invalid encription data " + strToDecrypt, e);
         }
     }
 
@@ -88,7 +87,7 @@ public class EncryptService {
                 try {
                     decryptFile(f, f2, secretKey);
                 } catch (Exception e) {
-                    LOGGER.warn("error copy file {} => {} - {}",  f.getAbsolutePath(), f2.getAbsolutePath(), e.getMessage());
+                    LOGGER.warn("error copy file {} => {} - {}", f.getAbsolutePath(), f2.getAbsolutePath(), e.getMessage());
                     throw e;
                 }
             } else {
@@ -132,13 +131,13 @@ public class EncryptService {
 
     private byte[] encryptHtml = null;
 
-    public byte[] encryptHtml(){
-        if(encryptHtml==null){
-            try(InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("encrypt.html")) {
-                if(is!=null){
+    public byte[] encryptHtml() {
+        if (encryptHtml == null) {
+            try (InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("encrypt.html")) {
+                if (is != null) {
                     encryptHtml = is.readAllBytes();
                 }
-            }catch (Exception e){
+            } catch (Exception e) {
                 LOGGER.error("read encrypt.html", e);
                 encryptHtml = new byte[0];
             }

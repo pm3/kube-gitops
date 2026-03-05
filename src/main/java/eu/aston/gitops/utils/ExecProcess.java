@@ -1,5 +1,8 @@
 package eu.aston.gitops.utils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
@@ -8,24 +11,21 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class ExecProcess {
 
     private final static Logger LOGGER = LoggerFactory.getLogger("exec");
 
     public static final boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
 
-    public static void execBuilder(File workDir, List<String> arguments, StringBuilder out){
-        if(out!=null){
-            execStream(workDir, arguments, (c)->out.append(c).append('\n'));
+    public static void execBuilder(File workDir, List<String> arguments, StringBuilder out) {
+        if (out != null) {
+            execStream(workDir, arguments, (c) -> out.append(c).append('\n'));
         } else {
             execStream(workDir, arguments, null);
         }
     }
 
-    public static void execStream(File workDir, List<String> arguments, Consumer<String> consumer){
+    public static void execStream(File workDir, List<String> arguments, Consumer<String> consumer) {
 
         Process p = null;
         try {
@@ -67,14 +67,14 @@ public class ExecProcess {
                 throw new RuntimeException("exitCode " + p.exitValue());
             }
             p.destroy();
-        }catch (RuntimeException e) {
+        } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
             LOGGER.warn("call process error {} - {}", String.join(" ", arguments), e.getMessage());
             LOGGER.warn("call process stack", e);
         } finally {
             try {
-                if(p!=null) p.destroy();
+                if (p != null) p.destroy();
             } catch (Exception ignore) {
             }
         }

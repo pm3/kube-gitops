@@ -4,4 +4,5 @@ public record GitData(String url,
                       String user,
                       String password,
                       String sshKey,
-                      String branch){}
+                      String branch) {
+}
