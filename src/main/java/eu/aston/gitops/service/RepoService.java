@@ -204,13 +204,13 @@ public class RepoService {
      * oci.auth() is "secret" or "namespace/secret" (Kubernetes secret with .dockerconfigjson from docker login).
      */
     public boolean pull(File dir, OciData oci, String defaultNamespace) {
-        if (oci == null || oci.img() == null || oci.img().isBlank()) {
+        if (oci == null || oci.name() == null || oci.name().isBlank()) {
             LOGGER.warn("pull: missing oci image");
             return false;
         }
-        String[] parsed = parseImageName(oci.img());
+        String[] parsed = parseImageName(oci.name());
         if (parsed == null) {
-            LOGGER.warn("pull: cannot parse image {}", oci.img());
+            LOGGER.warn("pull: cannot parse image {}", oci.name());
             return false;
         }
         String remote = parsed[0];
@@ -220,8 +220,8 @@ public class RepoService {
             ensureAuthForPull(oci.auth(), defaultNamespace);
             ManifestResponse manifest = getManifest(remote, name, version);
             String currentDigest = manifest.digest();
-            if (currentDigest != null && currentDigest.equals(cacheDigest.get(oci.img()))) {
-                LOGGER.debug("pull {} unchanged (digest {})", oci.img(), currentDigest);
+            if (currentDigest != null && currentDigest.equals(cacheDigest.get(oci.name()))) {
+                LOGGER.debug("pull {} unchanged (digest {})", oci.name(), currentDigest);
                 return false;
             }
             JsonElement root = JsonParser.parseString(manifest.body());
@@ -247,12 +247,12 @@ public class RepoService {
                 Files.deleteIfExists(tmp.toPath());
             }
             if (currentDigest != null) {
-                cacheDigest.put(oci.img(), currentDigest);
+                cacheDigest.put(oci.name(), currentDigest);
             }
-            LOGGER.info("pull {} into {} (digest {})", oci.img(), dir.getAbsolutePath(), currentDigest);
+            LOGGER.info("pull {} into {} (digest {})", oci.name(), dir.getAbsolutePath(), currentDigest);
             return true;
         } catch (Exception e) {
-            LOGGER.warn("pull {} failed: {}", oci.img(), e.getMessage());
+            LOGGER.warn("pull {} failed: {}", oci.name(), e.getMessage());
             LOGGER.debug("pull trace", e);
             return false;
         }
