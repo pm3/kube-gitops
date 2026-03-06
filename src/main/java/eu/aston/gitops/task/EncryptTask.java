@@ -6,7 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public class EncryptTask implements Consumer<Map<String, Object>> {
+public class EncryptTask implements ITask {
 
     private final EncryptService encryptService;
     private final String key;
@@ -17,7 +17,7 @@ public class EncryptTask implements Consumer<Map<String, Object>> {
     }
 
     @Override
-    public void accept(Map<String, Object> data) {
+    public void exec(Map<String, Object> data) {
         if (data.get("method") instanceof String method && method.equalsIgnoreCase("POST") && data.get("body") instanceof byte[] body) {
             String sBody = new String(body, StandardCharsets.UTF_8);
             try {

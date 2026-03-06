@@ -191,6 +191,18 @@ public class RepoService {
             b.header("Authorization", "Basic " + auth);
         }
         HttpResponse<byte[]> resp = httpClient.send(b.build(), HttpResponse.BodyHandlers.ofByteArray());
+        if (resp.statusCode() == 307 || resp.statusCode() == 308) {
+            // redirect blob fetches to storage; Location has the real URL (often with SAS).
+            String location = resp.headers().firstValue("Location").orElse(null);
+            if (location != null && !location.isBlank()) {
+                HttpRequest redirectReq = HttpRequest.newBuilder()
+                        .GET()
+                        .uri(URI.create(location))
+                        .timeout(Duration.ofMinutes(5))
+                        .build();
+                resp = httpClient.send(redirectReq, HttpResponse.BodyHandlers.ofByteArray());
+            }
+        }
         if (resp.statusCode() != 200) {
             LOGGER.warn("getBlob {} {} - {}", remote, digest, resp.statusCode());
             throw new RuntimeException("blob " + resp.statusCode());

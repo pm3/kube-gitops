@@ -9,8 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.Consumer;
 
-public class RepoTask implements Runnable {
+public class RepoTask implements ITask {
     private final Logger LOGGER = LoggerFactory.getLogger(RepoTask.class);
 
     private final KubeService kubeService;
@@ -30,7 +31,7 @@ public class RepoTask implements Runnable {
     }
 
     @Override
-    public void run() {
+    public void exec(Map<String, Object> data) {
         Map<String, String> imageHashCache = new HashMap<>();
         for (String namespace : opsNamespaces) {
             LOGGER.info("scan namespace {}", namespace);

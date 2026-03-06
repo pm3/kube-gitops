@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 
-public abstract class BaseKustomizeTask implements Consumer<Map<String, Object>> {
+public abstract class BaseKustomizeTask implements ITask {
     private final static Logger LOGGER = LoggerFactory.getLogger(GitTask.class);
 
     private final KubeService kubeService;
@@ -34,7 +34,7 @@ public abstract class BaseKustomizeTask implements Consumer<Map<String, Object>>
     }
 
     @Override
-    public void accept(Map<String, Object> data) {
+    public void exec(Map<String, Object> data) {
         if (gitOpsData == null) {
             return;
         }

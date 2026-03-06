@@ -1,12 +1,11 @@
 package eu.aston.gitops.event;
 
+import eu.aston.gitops.task.ITask;
 import eu.aston.gitops.utils.CronPattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -17,17 +16,20 @@ public class EventCtx {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EventCtx.class);
 
-    private final Map<String, Consumer<Map<String, Object>>> handlers = new ConcurrentHashMap<>();
     private final Executor executor = Executors.newSingleThreadExecutor();
-    private final ConcurrentHashMap<String, AtomicBoolean> insideQueueMap = new ConcurrentHashMap<>();
+    private final Map<String, TaskDef> tasks = new ConcurrentHashMap<>();
+    private final Set<String> waitingTasks = new HashSet<>();
     private final List<CronEvent> cronEvents = new ArrayList<>();
 
+    record TaskDef(ITask task, boolean async){}
+
     public List<String> eventNames() {
-        return new ArrayList<>(handlers.keySet());
+        return new ArrayList<>(tasks.keySet());
     }
 
-    public Object task(String path) {
-        return handlers.get(path);
+    public ITask task(String path) {
+        TaskDef taskDef = tasks.get(path);
+        return taskDef!=null ? taskDef.task() : null;
     }
 
     public boolean exec(String name) {
@@ -35,49 +37,41 @@ public class EventCtx {
     }
 
     public boolean exec(String name, Map<String, Object> data) {
-        Consumer<Map<String, Object>> handler = handlers.get(name);
-        if (handler != null) {
-            handler.accept(data);
+        TaskDef taskDef = tasks.get(name);
+        if (taskDef != null) {
+            if(taskDef.async()){
+                if(waitingTasks.contains(name)){
+                    LOGGER.info("ignore locked event {}", name);
+                    return false;
+                }
+                waitingTasks.add(name);
+                executor.execute(()->localExec(name, taskDef.task(), data));
+            } else {
+                localExec(name, taskDef.task(), data);
+            }
             return true;
         }
         return false;
     }
 
-    public void addAsync(String name, Consumer<Map<String, Object>> handler) {
-        insideQueueMap.put(name, new AtomicBoolean(false));
-        handlers.put(name, (d) -> {
-            AtomicBoolean lock = insideQueueMap.get(name);
-            if (lock != null && !lock.compareAndSet(false, true)) {
-                LOGGER.info("ignore locked event {}", name);
-                return;
-            }
-            executor.execute(() -> localExec(name, handler, d));
-        });
+    public void addAsync(String name, ITask task) {
+        tasks.put(name, new TaskDef(task, true));
     }
 
-    public void addAsync(String name, Runnable handler) {
-        addAsync(name, (d) -> handler.run());
-    }
-
-    public void addBlocked(String name, Consumer<Map<String, Object>> handler) {
-        insideQueueMap.remove(name);
-        handlers.put(name, (d) -> localExec(name, handler, d));
+    public void addBlocked(String name, ITask task) {
+        tasks.put(name, new TaskDef(task, false));
     }
 
     public void remove(String name) {
-        handlers.remove(name);
-        insideQueueMap.remove(name);
+        tasks.remove(name);
         cronEvents.removeIf((e -> e.event().equals(name)));
     }
 
-    private void localExec(String name, Consumer<Map<String, Object>> handler, Map<String, Object> data) {
+    private void localExec(String name, ITask task, Map<String, Object> data) {
         LOGGER.info("start event {}", name);
         try {
-            AtomicBoolean lock = insideQueueMap.get(name);
-            if (lock != null) {
-                lock.set(false);
-            }
-            handler.accept(data);
+            waitingTasks.remove(name);
+            task.exec(data);
         } catch (Exception e) {
             LOGGER.warn("event error {} - {}", name, e.getMessage());
             LOGGER.debug("event trace {}", name, e);
